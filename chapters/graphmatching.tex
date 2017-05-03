@@ -1,4 +1,5 @@
 \chapter{Graph Matching}
+\label{chap: graphmatching}
 
 \section{Introduction}
 
@@ -23,7 +24,7 @@ The match result is defined as a matrix $M$ where $M_{ai}$ is the probability ma
 
 We defined the problem of ARG matching in the following manner. Given two ARG, $G$ and $G'$, we want to find the match matrix $M$ such that the following objective function is minimized:
 
-\begin{equation} \label{eq:1}
+\begin{equation}
 E(M)=-\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}M_{bj}C_{abij}-\alpha\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}C_{ai}
 \end{equation}
 subject to a two way constraints: $\forall a\ne\phi$, $\sum_{i=1}^{G'}M_{ai}=1$ and $\forall i\ne\phi$, $\sum_{i=1}^GM_{ai}=1$:
@@ -40,22 +41,22 @@ subject to a two way constraints: $\forall a\ne\phi$, $\sum_{i=1}^{G'}M_{ai}=1$ 
 
 In Gold and Rangarajan's original algorithm, they solve the problem using a graduated assignment method where the two-way constraints are satisfied by normalizing rows and columns iteratively for many rounds (Sinkhorn 1963) and their compatibilities are defined as:
 \begin{align} 
-& C_{ai}  = \begin{cases}0 & a=\phi \bigcup i=\phi \\c_N(\overrightarrow{N_{a}},\overrightarrow{N_{i}}) & otherwise\end{cases} \label{eq:2}\\
-& C_{abij} = \begin{cases}0 & a=\phi \bigcup b=\phi \bigcup i=\phi \bigcup j=\phi \\c_E(\overrightarrow{E_{ab}},\overrightarrow{E_{ij}}) & otherwise\end{cases} \label{eq:3}
+& C_{ai}  = \begin{cases}0 & a=\phi \bigcup i=\phi \\c_N(\overrightarrow{N_{a}},\overrightarrow{N_{i}}) & otherwise\end{cases}\\
+& C_{abij} = \begin{cases}0 & a=\phi \bigcup b=\phi \bigcup i=\phi \bigcup j=\phi \\c_E(\overrightarrow{E_{ab}},\overrightarrow{E_{ij}}) & otherwise\end{cases} 
 \end{align}\\
 
 To expand on their graduated assignment method, we will first need to convert our objective function to an assignment problem. They way we do it is through Taylor series approximation, where given an initial $M^0$, we would have:
 \begin{align}
 E(M) = & -\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}M_{bj}C_{abij}-\alpha\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}C_{ai}\nonumber\\
-= & -\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}^{0}M_{bj}^{0}C_{abij}-\alpha\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}^{0}C_{ai} - Q_{ai}(M_{ai}-M_{ai}^{0})\label{eq:4}
+= & -\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}^{0}M_{bj}^{0}C_{abij}-\alpha\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}^{0}C_{ai} - Q_{ai}(M_{ai}-M_{ai}^{0})
 \end{align}
 where
-\begin{equation} \label{eq:5}
+\begin{equation} 
 Q_{ai}=-\frac{\partial E}{\partial M_{ai}}\bigg\rvert_{M=M_0}=+\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{bj}^{0}C_{abij}+\alpha C_{ai}
 \end{equation}\\
 
 Therefore, minimizing our objective function $E$ based on our Taylor series expansion is equivalent to maximizing 
-\begin{equation} \label{eq:6}
+\begin{equation}
 +\sum_{a=1}^{G}\sum_{i=1}^{G'}Q_{ai}M_{ai}
 \end{equation}
 which is an assignment problem!\\
@@ -85,13 +86,14 @@ Variable and constant definitions can be found as:
 	\includegraphics[width=0.95\textwidth]{figs/algorithm_variable.png}
 \end{figure}
 
-\section{Implementation}
+\section{Implementation Detail}
 
 \subsection{Compatibility}
+\label{ssec:compatibility}
 
 To calculate the compatibility, we assume the label/feature follows a Gaussian probability distribution function so that the compatibility function $c_N$ and $c_G$ is defined as:
 \begin{equation} 
-c_N( \overrightarrow{a}, \overrightarrow{b} )=c_E( \overrightarrow{a}, \overrightarrow{b})=\frac{exp(-\frac{1}{2}(\overrightarrow{a}-\overrightarrow{b})^{T}\delta^{-1}(\overrightarrow{a}-\overrightarrow{b})}{(2\pi)^{\zeta/2}|\delta|^{1/2}}
+c_N( \overrightarrow{a}, \overrightarrow{b} )=c_E( \overrightarrow{a}, \overrightarrow{b})=\frac{exp(-\frac{1}{2}(\overrightarrow{a}-\overrightarrow{b})^{T}\Sigma^{-1}(\overrightarrow{a}-\overrightarrow{b})}{(2\pi)^{\zeta/2}|\Sigma|^{1/2}}
 \end{equation}
 where $\delta$ is the covariance matrix and $\zeta$ is the dimension of $\overrightarrow{a}$ and $\overrightarrow{b}$. Since we assume feature independence, the covariance matrix $\delta$ is the identity matrix, which essentially will give us:
 \begin{equation} 
@@ -112,9 +114,21 @@ In our implementation, we use a very simple heuristic to clean up the match matr
 
 If you want to be more fancy about this, you can also convert this heuristic problem to a maximum spanning tree problem to make sure all the $M_{ij}$ that you set to 1 have the largest sum.
 
-\newpage
+\subsection{Converge Condition}
+
+In our implementation, we compare the previous match matrix $M^{(0)}$ and the current match matrix $M^{(1)}$, and conclude the matrix converge if the difference is less than some threshold $\iota$:
+
+\begin{equation} 
+\sum_{a=1}^{G}\sum_{i=1}^{G'}|M_{ai}^{(0)}-M_{ai}^{(1)}|<\iota
+\end{equation}
+
+\subsection{Run Time}
+\label{ssec:graphmatchingruntime}
+
+The algorithm takes $\sim40s$ to complete when matching two graphs with $\sim40$ nodes. However, you can certainly adjust the parameter like $I$ and $\beta$ to achieve faster run time.
 
 \section{Testing the Algorithm}
+\label{sec:graphmatchingtest}
 
 To test the algorithm, we first set a noise level $\epsilon \in [0,1]$. Then we generate a pattern with $n$ nodes and embed this pattern to $2$ randomly generated graphs, $G$ and $G'$, with $n$ to $n*(1+\epsilon)$ nodes. Once we embed the pattern in these two random graphs, we shuffle the index for each node and add some noise to the node and edge labels:
 
@@ -186,6 +200,7 @@ Once we incorporate the stochastic process to the algorithm, we gain a significa
 \end{figure}
 
 \subsection{High Recall + Low Precision}
+\label{ssec:nullnode}
 
 The other challenge we encounter is that even though we get high recall rate in a test, we also get low precision rate, which means the algorithm can generate correct match but also force many of the background nodes (i.e. nodes outside of the pattern) matching  to each other.\\
 
