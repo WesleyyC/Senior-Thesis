@@ -1,102 +1,54 @@
-\chapter{Further Questions}
+\chapter{Looking Forward}
+
+While this has already been a long journey, there are still some very exciting things we can do looking forward.
+
+\section{Graph Matching}
+
+\subsection{More Efficient Implementation}
+
+While the graph matching algorithm is already an approximation, it is still not fast enough to support the pattern learning model to learn in very large scale. Therefore, a more efficient implementation is of interest from an engineering view point and if we want to move the algorithm to production system.\\
+
+One major time sink of the algorithm is the iterative row and column normalizations enforcing by the two-way constraints. A potential solution would be using GPU to perform row/column normalization independently in parallel fashion. Another solution would be ignoring the normalizations altogether, and incorporating the two-way constraints into our objective functions with Lagrange multipliers:
+
+\begin{align}
+E(M)=&-\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}M_{bj}C_{abij}\nonumber\\
+&-\frac{1}{\beta}\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}(\text{log}M_{ai}-1)\nonumber\\
+&+\sum_{a=1}^{G}\mu_a(\sum_{i=1}^{G'}M_{ai}-1)+\sum_{i=1}^{G;}\nu_a(\sum_{a=1}^{G}M_{ai}-1)
+\end{align}
+
+and we can directly derive $M$ via the objective function using library like Theano\footnotemark. However, because of the nested sum, even though there is a matrix operation that can help us do the forward calculation, the back-propagation/derivation has not been implemented yet. Therefore, we did not implement such solution, but it would be much more efficient once the derivation for such operations are implemented.\\
+\footnotetext{http://www.deeplearning.net/software/theano/}
+
+Another time and memory sink for the algorithm would be the compatibility between edges. While the computation can be speed up via parallel computing, there are lots of communication overhead due to the design of the edge compatibility matrix, where each row or column is associated with a single edge in the graph and result in a $(|G|*|G|)\times(|G'|*|G'|)$ matrix. Since MATLAB only allows parallel computing row by row or column by column, we are still copying a huge vector in parallel task which result in lots of communication overhead. In addition, the compatibility matrix is very huge and could result in memory issue. Even though we can fix by storing it as a sparse matrix, sparse matrix could also introduce lots of computation overhead during the graduated assignment process.\\
+
+Therefore, it would be beneficial for us to think of another representation for edge compatibility scores that are both memory and computation efficient.
+
+\subsection{Automate Parameters Tuning}
+
+A lot of the frustrations during the development of this algorithm coming from tuning the parameter considering the large number of different combinations of parameter. Considering different application of the same algorithm could have very different optimal parameters configuration, it would be beneficial for users if the algorithm has some mechanisms to tune the parameter automatically based on the expected matching result.\\
+
+While this problem can easily turn into another project about model learning, we can start from a simple grid search, or learn about how different parameters could affect different aspects of the matching result and adjust them accordingly.
 
 
-\section{Reconstruction Hypothesis}
+\section{Pattern Learning}
 
-The Reconstruction Hypothesis is a claim in theoretical computer science that is very likely true, but has not been proven to be.
-The hypothesis revolves around the notion of a `deck' of a graph $G$ with $N$ vertices.
-The Deck of G ($Deck(G)$) is a (possibly multi-)set of $N$ graphs, each of size $N-1$, all of which are created by deleting one vertex from the graph G.
+\subsection{Smarter Component Initiation}
 
-Two Decks $D_1$ and $D_2$ are said to be isomorphic if there exists a one to one mapping of their elements such that every graph $g_i \in D_1$ is mapped to an isomorphic graph $g_j \in D_2$.
-The reconstruction hypothesis is the claim that two decks are isomorphic if and only if their graphs are isomorphic, or in formal terms:
+In our model, the initial components can have a huge impact on model's pattern learning quality. For instance, if the share pattern has two components but our starting components only have one of them, the model could never capture the entire pattern. Therefore, we might want to be smarter than random when initializing our model components.\\
 
-$$ Deck(G) \cong Deck(H) \iff G \cong H$$
+One potential solution would be do a pairwise graph matching before picking the components, and incorporate some heuristic rules (e.g. matching result clarity, larger matching nodes etc) to help us pick the components.\\
 
-Though this hypothesis seems pretty iron clad, there is one known violation, two non-isomorphic graphs over two vertices have congruent decks. Can you find them? (hint: there are only two graphs over two vertices).
-Thus the actual hypothesis only makes its claim for $N \geq 3$.
-As we get to larger and larger values of $N$, it would seem that the hypothesis becomes harder to refute via a counter example, both because the amount of information that goes into the physical representation of the deck increases cubically, and because the unknown pieces of the graph shrink relative to the consistent amount provided by each card in the deck.
+Another solution would be introducing a mechanism allows the model to swap in random sample ARGs as new components, and switch it our if the performance does not get better.
 
-However, the nature of the hypothesis is so hard to verify, (and the number of graphs grows so large so quickly) that its verification has only been done up to graphs of 11 vertices, by McKay in 1999.
+\subsection{Component and Node Deletion}
 
-One would think, that with today's technology and resources, we ought be able to improve upon that bound, and increase N to 12 (or find a counterexample therein).
-That is hopefully the site of some future work.
+Since we start off with sample ARGs as our components ARGs, it is important for the components ARGs to reduce themselves in order to accurately represent the share pattern. However, in many of our experiments, the node deletion is not always perfect just based on a threshold. Therefore, we might want to introduce more heuristic rules for deletion in the future. One such rule could be examining $\beta^w$ across multiple rounds, and only delete it based on a history of pattern.\\
 
-\subsection{Parallelizing a Reconstruction Check to 12 vertices}
+In addition to node deletion, it would be helpful if we could delete the entire component as well since the randomly initialized components could share similar pattern, and therefore become redundant. Introducing a mechanism for component deletion not only allow us to start from a relatively large pool of components, but also help us speed up the model training. One potential way we could do this is by comparing the result of two components matching to the same sample ARG.
 
-One thought that I had in pursuing this question was: how can we use the massively available scalability of today's cloud based world to extend this problem past 11 vertices?
-If McKay can do 11 vertices in 1999, one would think that in 2016 we ought be able to do 12 (despite the 160 fold increase in the number of graphs).
-Here is the algorithm as I would design it.
+\subsection{Other Applications}
 
-First, lets define a simple algorithm for checking for equivalent decks.
-Given a graph $G$, create all of its vertex deleted subgraphs, canonically label and encode each, then append them in lexicographical order.
-This string is relatively short.
-For an original graph with 12 vertices, there would be 12 graphs of size 11, if we strip off the first character, which is the same across all graphs of the same size, the encoding is only 10 characters long per graph, meaning that a deck could easily be encoded in only 110 characters (or, 440 bytes).
-The running time for this algorithm (using NAUTY as a sub-call from a C function (with hardcoded values of 11 and 12 vertices)) takes approximately 2 seconds on average.
-Thus, if we were able to perfectly parallelize this approach (lets say, across 30 servers), we could
+Besides protein structure mining, another interesting application for the pattern learning model would be in computer vision, which is dominated by Neural Network nowadays. While...
 
+\section{Protein Modeling}
 
-
-However, we would also need to be smart about when we compare these decks.
-We cannot use a database to store them (as 440 bytes * 160 billion graphs = 71TB)
-so we need to generate all graphs which could share a deck at the same time and check at a local level.
-This is how we would go about doing that:
-
-If two graphs $G$ and $H$ over 12 vertices are going to have isomorphic decks, then there exist 12 graphs of size 11 such that each is a vertex deleted subgraph of both.
-Given a graph $G$, lets call the seeds of $G$ to be the vertex deleted subgraphs such that the vertex that was deleted is the one with the maximum degree.
-There can be multiple seeds of $G$ if the graph's maximal degree is repeated multiple times in its degree sequence.
-It has been shown that across all graph instances, the number of graphs with a maximal degree incidence greater than one is a negligible proportion of all graphs.
-Thus, our algorithm leverages this fact to do seeded checking for deck isomorphism.
-
-As a side note, it should be obvious that no graphs could violate the reconstruction hypothesis if they have a fully connected node or a fully disconnected node.
-
-Here is the algorithm: a computational node is delivered a graph of size 11, called $S$.
-If the maximum degree of $S$ is $K$, then the range to search is deemed $[K, 10]$ (as remember, no violating graph can have a fully connected node with degree 11).
-For each integer $k \in [K, 10]$, we generate $choose(11, k)$ augmented graphs of $S$, for each of the possible connection patterns.
-Before we move on to the next value of k, we check each of these graphs for deck isomorphism using the technique provided above.
-
-From the small amount of work (unoptimized) that I have done on implementing this checking system so far, it appears that the running time of this algorithm would be about a millisecond per graph of size 11 checked.
-This would imply that computation of this algorithm over all graphs of size 11 (which would check all graphs of size 12) would take about 12 days to complete, running on the single workstation I was using.
-If we distribute this workload across many servers, as we could easily do by generating different sets of graphs to check on each (i.e. using NAUTY geng with different values of e), I imagine that this running time could be significantly decreased.
-
-I hope to be able to pursue this verification once my thesis is submitted and I have nothing to do until graduation.
-
-\subsection{Potential Reconstruction Procedure: The Triangle Inequality}
-
-One of the first questions I asked when I came across the reconstruction hypothesis was: can Cycles be a part of a solution to this problem? Can we create an algorithm which leverages properties of cycles in order to attempt to reconstruct a graph, or at least place limitations on the possibilities for reconstruction? 
-I puzzled away at this for a while, and came up with an interesting way of incorporating cycles into a reconstruction procedure.
-I will apologize in advance: this section is particularly notation heavy, and I don't think there is anything that can be done to avoid that. 
-
-Lets start with a thought experiment.
-In a graph $G$, with vertices $x$ and $y$, the number of cycles which pass through a given vertex (lets say vertex $x$) is equal to the number of cycles which pass through the vertex $x$ and the vertex $y$, plus the number of Cycles that pass through the vertex $x$ but not the vertex $y$. 
-This is true for all lengths of cycles we are considering.
-Thus, we can make a claim of this nature using vectors of length P as our operating unit.
-We will refer to these vectors by the notation $[x]_G$, denoting the vector of the number of cycles that pass through vertex $x$ within graph $G$, and we will use $[x \xoverline{y}]_G$ to refer to the number of cycles which pass through vertex $x$ but not through vertex $y$ in graph $G$.
-
-In this notation, the above claim translates to:
-$$ [x]_G = [x y]_G + [x \xoverline{y}]_G $$
-though this is not revolutionary, when we start to mess around with our graph and its subgraphs, this simple claim can be manipulated to produce much more interesting ones. 
-For example, in the vertex deleted subgraph $G - y$:
-$$[x]_{G - y} = [x \xoverline{y}]_G = [x]_{G} - [x y]_G$$
-We can state the same thing about vertices $y$ and $x$:
-$$[y]_{G - x} = [y]_{G} - [x y]_G$$
-If we subtract these two equations together, we get:
-$$[y]_{G - x} - [x]_{G - y} = [y]_{G} - [x]_G$$
-
-This is something we will call the `tuple' identity.
-If we have some proposed mapping between the deck cards ($G - y \text{and} G - x$ in this case) and their proposed associated vertices in their deck cards, we can verify this via the difference between their cycles vector values over the full graph G.
-A careful reader will now interject: but we don't know the full graph G! If we did, we wouldn't be mucking around with all of this!
-
-We can get around this fact by employing three such `tuple' identities, to construct a much stronger (and not too information needy) test for possible deck-vertex mappings:
-$$[y]_{G - x} - [x]_{G - y} = [y]_{G} - [x]_G$$
-$$[z]_{G - x} - [x]_{G - z} = [z]_{G} - [x]_G$$
-$$[z]_{G - y} - [y]_{G - z} = [z]_{G} - [y]_G$$
-Adding the first and third, while subtracting the second yields us:
-$$[z]_{G - y} - [y]_{G - z} + [y]_{G - x} - [x]_{G - y} - [z]_{G - x} - [x]_{G - z} = 0$$
-$$([z] - [x])_{G - y} + ([x] - [y])_{G - z} + ([y] - [z])_{G - x} = 0$$
-
-This is the proposed `triangle equality', which needs to hold for every triplet of vertices within a proposed mapping of vertex to card.
-
-If I had more time (if only, if only), I think I could transform this into a set of boolean predicates which could begin to describe a highly discriminatory set of constraints on the possible reconstructions.
-The key thing here is that the overall number of triplets for which this can hold is very small, but also sortable. 
-In other words, if you have an idea for a mapping between to vertices and cards, the third could be found quickly by using the remaining constraint of the vector equality dictated by the triangle inequality.
-Alas, this is as far as I got with this promising use of the Cycles invariant.
