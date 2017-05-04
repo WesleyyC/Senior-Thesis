@@ -48,7 +48,35 @@ In addition to node deletion, it would be helpful if we could delete the entire 
 
 \subsection{Other Applications}
 
-Besides protein structure mining, another interesting application for the pattern learning model would be in computer vision, which is dominated by Neural Network nowadays. While...
+Besides protein structure mining, another interesting application for the pattern learning model would be computer vision, which is dominated by Neural Network nowadays.\\
+
+Neural Network like CNN(Convolutional Neural Network) is a very effective model for object recognition because the non-linear transformation and back-propagation are able to learn features automatically and effectively. Moreover, pooling layer has been effective in handling minor variance while different filters can handle large variance like rotation\footnotemark. However, when the scene becomes more complicated, describing the relationship between multiple object for instance, CNN becomes less effective (larger model and more training data) because CNN is more effective in learning features, but less effective in modeling relationship. For instance, if we have two objects whose relationship is a certain distance (A), to recognize the same relationship after rotation (B), a CNN might need to learn an additional filter for the $45^\circ$ angle, while an ARG representation can easily recognize the rotated scene with no trouble:\\
+\footnotetext{Filters might not be representing different rotations exactly but rotation certainly requires more filters to summarize more features.} 
+
+\begin{figure}[h]
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=0.8\textwidth]{figs/rotation.png}
+	\caption[Caption for LOF]{\emph{A. Two objects (circles) have a relationship of a certain distance $X$.\\ B. A rotated scene showing such relationship. }}
+	\label{fig:rotation}
+\end{figure}
+
+Therefore, the pattern learning model described here can be very helpful in understanding the relationship between complex scene ("student taking class", "cars stuck in traffic" etc) while CNN helps the model to recognize individual object in the scene or generate latent representation for individual object.\\
+
+Besides computer vision, the pattern learning model can also be used in the field of natural language processing, especially modeling the relationship (e.g. Q\&A, extension, agreement, etc.) between sentences in a dialogues. Here, we can turn each word/concept to a node (whose label can be the word vector) and the word/concept distance as the edge. Once we turn the conversation exchange into an ARG, we might be able to model different relationship as well.\\
+
+Therefore, combining neural network for individual object and pattern learning for modeling relationship, machines probably can learn complex structure, scenes, conversations and many other things more effectively. I am really excited about what's coming next.
 
 \section{Protein Modeling}
 
+\subsection{Novel Structure Motif in Protein}
+
+While the proof of concept we did in Section \ref{sec:poc} is nice, domain discovery is not a very challenging task. Due to its relatively large size, simple 3D alignment should give you a reasonably good match and you don't really need to model the protein as an ARG.\\
+
+However, if we are able to train the model efficiently with enough data, we might be able to discover 3D structure motifs that have long been overlooked by sequential matching algorithm. If the model can learn such novel motif, it would be of great help for many biologists.
+
+\subsection{Amino Acid 2 Vec}
+
+
+
+\subsection{Edge for Protein ARG revisit}
