@@ -2,7 +2,7 @@
 
 \section{Introduction}
 
-Proteins are macromolecules responsible for nearly every task of cellular life. They are 3D structures consisting of amino acid sequences translated from genes and interact with each other to carry out essential functions, such as catalyzing metabolic reaction, transport molecules, respond to stimuli, and so on. Such interactions often happen at sites (e.g. protein domains) that are conserved between proteins across species. By recombining and rearranging these domains as proteins? basic building block, molecular evolution is able to create proteins with different functions.\\
+Proteins are macromolecules responsible for nearly every task of cellular life. They are 3D structures consisting of amino acid sequences translated from genes and interact with each other to carry out essential functions, such as catalyzing metabolic reaction, transport molecules, respond to stimuli, and so on. Such interactions often happen at sites (e.g. protein domains) that are conserved between proteins across species. By recombining and rearranging these domains as proteins' basic building block, molecular evolution is able to create proteins with different functions.\\
 
 Conventional computational methods for studying protein domains between proteins mainly use the sequences and secondary structures of proteins to do pattern matching, which ignores the 3D nature of proteins and cannot take advantage of the available 3D structures of proteins. For instance, the beginning and the end of an amino acid sequence might come together as a single function group after folding. However, sequential pattern matching would not be able to capture such union. and would produce two separate patterns (one at the beginning and one at the end), instead of a single functional pattern. Therefore, to achieve better understandings about protein interactions and their functions, we need to investigate the detailed spatial characteristics of the 3D structures of proteins. \\
 
@@ -79,6 +79,7 @@ And the compatibility function would then become:
 While the BLOSUM matrix $B$ address the problematic compatibility function for one hot representation. Another problem that we would need to address is model node update. If you recall how we update the mean for component node in E.q. \ref{eq:nmean}, we took a weighted average of all the node based on how the node matching probability and sample matching probability. However, since the index is not continuous, it doesn't really make sense to take the mean any more. During our trail, we simply take the index from the node that has the highest weight/matching probability. This is certainly not ideal, and we want to search for a continuous representation for amino acid that are continuous with a compatibility function that consider the similar biochemistry property of different amino acids.
 
 \subsubsection{Amino Acid 2 Vec}
+\label{sssec:a2v}
 
 In natural language processing, researchers deal with a similar problem for one hot representation of word. They came up with word embedding based on its surrounding context, and developed a very effective model, Skip-Gram, for generating word vector. With library like Gensim\footnotemark, we can generate our own word vector by simply feeding the model enough document with words.\\
 \footnotetext{https://radimrehurek.com/gensim/}
@@ -124,7 +125,7 @@ When initializing the model protein ARG, we set the local substitution vector ba
 
 Once we calculate $\overrightarrow{F^w_i}$, we can calculate the log odd-ratio with an amino acid background frequency $\overrightarrow{F_B}$ that we can pre-defined or calculate based on the sample protein ARGs:
 \begin{align} 
-\overrightarrow{N^w_i}[z] = & \frac{\overrightarrow{F^w_i}[z]}{\overrightarrow{F_B}[z]} & \forall z=1,2,3...20
+\overrightarrow{N^w_i}[z] = & \text{log}(\frac{\overrightarrow{F^w_i}[z]}{\overrightarrow{F_B}[z]}) & \forall z=1,2,3...20
 \end{align}
 
 While this seems complicated, but it is the same idea as BLOSUM matrix. Instead of using a conserve protein alignment database as for BLOSUM, we used our own alignment/matching matrix $M^{sw}$. Since $M^{sw}$ is computed both by amino acid compatibility as well as structure/edge compatibility, we are able to introduced locality into such local substitution vector.
@@ -143,11 +144,11 @@ E(M)=&-\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{a
 
 While the addition looks complicated, it is simply saying that: if node $a$ in $G$ has a good match with node $i$ in $G'$, than the node immediately before and after node $a$ should also have a good match with the node immediately before and after node $i$ as we are indexing the node by their sequence order.
 
-\section{Proof of Concept\protect\footnotemark}
+\section{Proof of Concept}
 \label{sec:poc}
-\footnotetext{Not enough time to do it all!}
 
-Just to do a proof of concept, we trained a model on $5$ protein structure all contains same part of the \emph{CH1} domain with $2$ components and test it on the original structure, mutated structure(reversing the entire sequence, partition the sequence and reverse the order of partition) that are impossible to detect without 3D structure information, and finally random structure:
+Just to do a proof of concept\footnotemark, we trained a model on $5$ protein structure all contains same part of the \emph{CH1} domain with $2$ components and test it on the original structure, mutated structure(reversing the entire sequence, partition the sequence and reverse the order of partition) that are impossible to detect without 3D structure information, and finally random structure:
+\footnotetext{Not enough time to do it all!}
 
 \begin{figure}[h]
 	\centering
@@ -157,7 +158,7 @@ Just to do a proof of concept, we trained a model on $5$ protein structure all c
 	\label{fig:protein_learning}
 \end{figure}
 
-As we can see, our train model can clearly separate \emph{CH1} domain from random structure. Moreover, for cases where the sequence(indexes) is entirely reversed or reversed in partition (i.e. part of structure move to another place), model are still able to capture the domain. However, if we used traditional sequential matching techniques to find the \emph{CH1} domain, we won't be able to recover the domain if the sequence is reversed or reversed by partition. In addition, our graph matching algorithm also operates in very high precision thanks to the local substitution vector. Here are some examples of protein matching result visualizing in their 3D form:\\
+As you can see, our trained model can clearly separate \emph{CH1} domain from random structure. Moreover, for cases where the sequence(indexes) is entirely reversed or reversed in partition (i.e. part of structure move to another place), model are still able to capture the domain. However, if we used traditional sequential matching techniques to find the \emph{CH1} domain, we won't be able to recover the domain if the sequence is reversed or reversed by partition. In addition, our graph matching algorithm also operates in very high precision thanks to the local substitution vector. Here are some examples of protein matching result visualizing in their 3D form:\\
 
 \begin{figure}[h]
 	\centering

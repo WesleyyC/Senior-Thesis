@@ -1,7 +1,5 @@
 \chapter{Looking Forward}
 
-While this has already been a long journey, there are still some very exciting things we can do looking forward.
-
 \section{Graph Matching}
 
 \subsection{More Efficient Implementation}
@@ -13,7 +11,7 @@ One major time sink of the algorithm is the iterative row and column normalizati
 \begin{align}
 E(M)=&-\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{ai}M_{bj}C_{abij}\nonumber\\
 &-\frac{1}{\beta}\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{ai}(\text{log}M_{ai}-1)\nonumber\\
-&+\sum_{a=1}^{G}\mu_a(\sum_{i=1}^{G'}M_{ai}-1)+\sum_{i=1}^{G;}\nu_a(\sum_{a=1}^{G}M_{ai}-1)
+&+\sum_{a=1}^{G}\mu_a(\sum_{i=1}^{G'}M_{ai}-1)+\sum_{i=1}^{G'}\nu_a(\sum_{a=1}^{G}M_{ai}-1)
 \end{align}
 
 and we can directly derive $M$ via the objective function using library like Theano\footnotemark. However, because of the nested sum, even though there is a matrix operation that can help us do the forward calculation, the back-propagation/derivation has not been implemented yet. Therefore, we did not implement such solution, but it would be much more efficient once the derivation for such operations are implemented.\\
@@ -61,9 +59,9 @@ Neural Network like CNN(Convolutional Neural Network) is a very effective model 
 	\label{fig:rotation}
 \end{figure}
 
-Therefore, the pattern learning model described here can be very helpful in understanding the relationship between complex scene ("student taking class", "cars stuck in traffic" etc) while CNN helps the model to recognize individual object in the scene or generate latent representation for individual object.\\
+Therefore, the pattern learning model described here can be very helpful in understanding the relationship between complex scene ("student taking class", "cars stuck in traffic" etc.) while CNN helps the model to recognize individual object in the scene or generate latent representation for individual object.\\
 
-Besides computer vision, the pattern learning model can also be used in the field of natural language processing, especially modeling the relationship (e.g. Q\&A, extension, agreement, etc.) between sentences in a dialogues. Here, we can turn each word/concept to a node (whose label can be the word vector) and the word/concept distance as the edge. Once we turn the conversation exchange into an ARG, we might be able to model different relationship as well.\\
+Besides computer vision, the pattern learning model can also be used in natural language processing task, like modeling the relationship (e.g. Q\&A, extension, agreement, etc.) between sentences in a dialogues. Here, we can turn each word/concept to a node (whose label can be the word vector) and the word/concept distance as the edge. Once we turn the conversation exchange into an ARG, we might be able to model different relationship as well.\\
 
 Therefore, combining neural network for individual object and pattern learning for modeling relationship, machines probably can learn complex structure, scenes, conversations and many other things more effectively. I am really excited about what's coming next.
 
@@ -75,8 +73,14 @@ While the proof of concept we did in Section \ref{sec:poc} is nice, domain disco
 
 However, if we are able to train the model efficiently with enough data, we might be able to discover 3D structure motifs that have long been overlooked by sequential matching algorithm. If the model can learn such novel motif, it would be of great help for many biologists.
 
-\subsection{Amino Acid 2 Vec}
+\subsection{Protein as Documents and Amino Acid as Word}
+
+In Section \ref{sssec:a2v}, we treated protein as documents and amino acid as word, which allows us to use model in natural language field to generate representation for amino acid.\\
+
+In the same line, many of the models developed today in the natural language field, especially the kinds dealing with sequential model, might be a great tool for answering question about protein. For instance, we can use a Seq2Seq model to predict structure of protein sequence, or use LSTM model to predict protein chemical property with the protein sequence.
 
 
+\subsection{Edge for Protein ARG Revisit}
 
-\subsection{Edge for Protein ARG revisit}
+While tuning hyper parameters for the model, we realized that the node compatibility needs to play a more important role(larger $\alpha$) in order to get clear and correct result for graph matching. This makes sense because protein alignment should be driven more by the amino acid compatibility. However, can we give edge here a different representation and a more effective relationship to help with matching/alignment?
+

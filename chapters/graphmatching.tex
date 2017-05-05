@@ -196,7 +196,7 @@ Once we incorporate the stochastic process to the algorithm, we gain a significa
 	\captionsetup{justification=centering}
 	\includegraphics[width=0.85\textwidth]{figs/s_improved.png}
 	\caption[Caption for LOF]{\emph{$F_1$ score distribution histogram for the original algorithm (orange) and the improved algorithm with stochastic process (blue).}}
-	\label{fig:stochastic}
+	\label{fig:s_improved}
 \end{figure}
 
 \subsection{High Recall + Low Precision}
@@ -233,7 +233,7 @@ While this is a lot to unpack, the updated compatibility function essentially cr
 	\captionsetup{justification=centering}
 	\includegraphics[width=0.46\textwidth]{figs/null_node_network.png}
 	\caption[Caption for LOF]{\emph{The self linked/connected null node $\phi$ (grey) can be treated as a fully connected null node that can be matched to any pattern including background nodes. }}
-	\label{fig:stochastic}
+	\label{fig:null_node_network}
 \end{figure}
 
 After modified the compatibility function in the original algorithm, we are able to generate match result with both high recall and high precision. For instance, two graph with backgrounds nodes at the beginning and the end (in terms of their index) are not forced to match to each other (left) and end up match to the null node/the slack column/row in the end (right):
@@ -242,7 +242,7 @@ After modified the compatibility function in the original algorithm, we are able
 	\captionsetup{justification=centering}
 	\includegraphics[width=0.8\textwidth]{figs/null_node_improve.png}
 	\caption[Caption for LOF]{\emph{This is a visualization of the match matrixes produced by the original algorithm by Gold and Rangarajan (left) and the modified version (right).}}
-	\label{fig:stochastic}
+	\label{fig:null_node_improve}
 \end{figure}
 
 \section{Conclusion}
