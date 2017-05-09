@@ -3,12 +3,13 @@
 
 \section{Introduction}
 
-In order to extract the common pattern from graphs, we need to first compare two graphs and match\footnotemark the relevant part together to better summarize them. However, since the largest common subgraph problem is NP-complete, the graph matching problem we are dealing with is also NP-complete (even though you can argue it's NP-hard in some other definition). Therefore, we must look for good suboptimal solutions via approximation.
-\footnotetext{The graph matching here is different than the "matching" problem in graph theory where the \emph{matching} is a set of pairwise non-adjacent edge.}\\
+In order to extract the common pattern from graphs, we need to first compare two graphs and match\footnotemark the relevant part together to better summarize them. However, since the largest common subgraph problem is NP-complete, the graph matching problem we are dealing with is also NP-complete\footnotemark. Therefore, we must look for good suboptimal solutions via approximation.
+\footnotetext{The graph matching here is not the same as the "matching" problem in graph theory where the \emph{matching} is a set of pairwise non-adjacent edge.}
+\footnotetext{Even though you can argue it's NP-hard in some other definition.}\\
 
-There are two main approaches for graph matching. One approach involves the construction of a state-space that can be searched via some brach and bound methods. While some heuristic rule can help us reduce the complexity from exponential to polynomial, the polynomial complexity would still have a high complexity. The second approach employs nonlinear optimization methods like relaxation labeling, which do not search based on the state-space and generally have a much lower computational complexity.\\
+There are two main approaches for graph matching. One approach involves the construction of a state-space that can be searched via some brach and bound methods. While some heuristic rule can help us reduce the complexity from exponential to polynomial, the polynomial complexity would still have a high complexity. The second approach employs nonlinear optimization methods like relaxation labeling, which doesn't search based on the state-space and generally have a much lower computational complexity.\\
 
-In the realm of nonlinear optimization methods and similar to relaxation labeling, here we described a graduated assigned approach developed by Gold and Rangarajan in 1996 and the improvement we made on the algorithm in order deal with larger graphs we encounter today 20 years later.
+Similar to relaxation labeling, here we described a graduated assigned approach developed by Gold and Rangarajan in 1996 and the improvement we made on the algorithm in order deal with larger graphs we encounter 20 years later.
 
 \section{Syntax and Definition}
 
@@ -16,7 +17,7 @@ Here we use a attributed relational graph (ARG) to represent our spatial pattern
 
 Since two graphs might only match partially by their subgraph or might not have match at all, Gold and Rangarajan add a null node, $\phi$, in each ARG.\\
 
-We then can define the node compatibility function($c_N$) and the edge compatibility function($c_E$) to calculate the compatibility, $C$, between the nodes and edges between two ARGs, $G$ and $G'$. Here, $C_{ai}$ is the compatibility between node $\overrightarrow{N_{a}}$ in $G$ and node $\overrightarrow{N_{i}}$ in $G'$, while $C_{abij}$ is the compatibility between edge $\overrightarrow{E_{ab}}$ in $G$ and $\overrightarrow{E_{ij}}$ in $G'$.\\
+We can then define the node compatibility function($c_N$) and the edge compatibility function($c_E$) to calculate the compatibility, $C$, between the nodes and edges between two ARGs, $G$ and $G'$. Here, $C_{ai}$ is the compatibility between node $\overrightarrow{N_{a}}$ in $G$ and node $\overrightarrow{N_{i}}$ in $G'$, while $C_{abij}$ is the compatibility between edge $\overrightarrow{E_{ab}}$ in $G$ and $\overrightarrow{E_{ij}}$ in $G'$.\\
 
 The match result is defined as a matrix $M$ where $M_{ai}$ is the probability matching the $a$th node in $G$ to the $i$th node in $G'$.
 
@@ -33,13 +34,13 @@ subject to a two way constraints: $\forall a\ne\phi$, $\sum_{i=1}^{G'}M_{ai}=1$ 
 	\centering
 	\captionsetup{justification=centering}
 	\includegraphics[width=0.25\textwidth]{figs/two_way_constraints.png}
-	\caption[Caption for LOF]{\emph{Both rows and columns should sum up to 1 except the row and column involving $\phi$ nodes, which are considered the slack row and slack column.}}
+	\caption[Caption for LOF]{\emph{Both rows and columns should sum up to 1 except the row and column involving $\phi$ nodes, which are considered the slack row and column.}}
 	\label{fig:two_way_constraints}
 \end{figure}
 
 \section{Graph Matching by Gold and Rangarajan}
 
-In Gold and Rangarajan's original algorithm, they solve the problem using a graduated assignment method where the two-way constraints are satisfied by normalizing rows and columns iteratively for many rounds (Sinkhorn 1963) and their compatibilities are defined as:
+In Gold and Rangarajan's original algorithm, they solve graph matching using a graduated assignment method where the two-way constraints are satisfied by normalizing rows and columns iteratively for many rounds (Sinkhorn 1963). Their compatibilities are defined as:
 \begin{align} 
 & C_{ai}  = \begin{cases}0 & a=\phi \bigcup i=\phi \\c_N(\overrightarrow{N_{a}},\overrightarrow{N_{i}}) & otherwise\end{cases}\\
 & C_{abij} = \begin{cases}0 & a=\phi \bigcup b=\phi \bigcup i=\phi \bigcup j=\phi \\c_E(\overrightarrow{E_{ab}},\overrightarrow{E_{ij}}) & otherwise\end{cases} 
@@ -63,7 +64,7 @@ which is an assignment problem!\\
 
 Therefore, we can run the following algorithm for the graduated assignment:\\
 \\
-\textbf{Initialize} $\beta$ to $\beta_{0}$, $M_{ai}$ to a random sample from $U(0,1)$\\
+\textbf{Initialize} $\beta$ to $\beta_{0}$, $M_{ai}$ to a random number from $U(0,1)$\\
 \textbf{Begin $A$:} (Do $A$ until $\beta \geq \beta_{f}$)\\
 \indent \textbf{Begin $B$:} (Do $B$ until $M$ converges or \# of iterations $>I_0$)\\
 \indent $Q_{ai} \leftarrow \sum_{b=1}^{G}\sum_{j=1}^{G'}M_{bj}^{0}C_{abij}+\alpha C_{ai}$\\
@@ -79,7 +80,7 @@ $\beta\leftarrow\beta_{r}\beta$\\
 \textbf{End $A$}\\
 \textbf{Perform Clean-up Heuristic}\\
 
-Variable and constant definitions can be found as:
+Variables and constants are defined as:
 \begin{figure}[h]
 	\centering
 	\captionsetup{justification=centering}
@@ -91,18 +92,18 @@ Variable and constant definitions can be found as:
 \subsection{Compatibility}
 \label{ssec:compatibility}
 
-To calculate the compatibility, we assume the label/feature follows a Gaussian probability distribution function so that the compatibility function $c_N$ and $c_G$ is defined as:
+To calculate the compatibility, we assume the label/feature vector follows a Gaussian probability distribution function so that the compatibility function $c_N$ and $c_E$ are defined as:
 \begin{equation} 
 c_N( \overrightarrow{a}, \overrightarrow{b} )=c_E( \overrightarrow{a}, \overrightarrow{b})=\frac{exp(-\frac{1}{2}(\overrightarrow{a}-\overrightarrow{b})^{T}\Sigma^{-1}(\overrightarrow{a}-\overrightarrow{b})}{(2\pi)^{\zeta/2}|\Sigma|^{1/2}}
 \end{equation}
-where $\delta$ is the covariance matrix and $\zeta$ is the dimension of $\overrightarrow{a}$ and $\overrightarrow{b}$. Since we assume feature independence, the covariance matrix $\delta$ is the identity matrix, which essentially will give us:
+where $\Sigma$ is the covariance matrix and $\zeta$ is the dimension of $\overrightarrow{a}$ and $\overrightarrow{b}$. Since we assume feature independence, the covariance matrix $\Sigma$ is the identity matrix, $I$, which allows us to simplify the function to:
 \begin{equation} 
 c_N( \overrightarrow{a}, \overrightarrow{b} )=c_E( \overrightarrow{a}, \overrightarrow{b})=\frac{exp(-\frac{1}{2}(\overrightarrow{a}-\overrightarrow{b})^{T}(\overrightarrow{a}-\overrightarrow{b})}{(2\pi)^{\zeta/2}}
 \end{equation}
 
 \subsection{Parallel Computing and Caching}
 
-The majority of the computation complexity in the algorithm is in computing the compatibility, especially the edge compatibility.\\
+The majority of the computation complexity of the algorithm is in computing the compatibility, especially the edge compatibility.\\
 
 Since the compatibility function defined can be computer independently, one way we could speed up the algorithm is calculating the compatibility in parallel fashion.\\
 
@@ -110,7 +111,7 @@ Another way we could improve the computation time would be through caching, wher
 
 \subsection{Heuristic}
 
-In our implementation, we use a very simple heuristic to clean up the match matrix $M$ from a \emph{softassign} matrix to a matrix only with $0$ and $1$. We simply set the largest value (at index $j$) for each row $i$ to 1 and other value to 0. After setting $M_{ij}$ to 1, we also set the entire $j$ column to 0 in order to satisfy the two-way constraints.\\
+In our implementation, we use a very simple heuristic to clean up the match matrix $M$ from a \emph{softassign} matrix with value between 0 and 1 to a matrix only with value of either $0$ or $1$. We simply set the largest value (at index $j$) for each row $i$ to 1 and other value to 0. After setting $M_{ij}$ to 1, we also set all other entries in $j$ column to 0 in order to satisfy the two-way constraints.\\
 
 If you want to be more fancy about this, you can also convert this heuristic problem to a maximum spanning tree problem to make sure all the $M_{ij}$ that you set to 1 have the largest sum.
 
@@ -125,12 +126,12 @@ In our implementation, we compare the previous match matrix $M^{(0)}$ and the cu
 \subsection{Run Time}
 \label{ssec:graphmatchingruntime}
 
-The algorithm takes $\sim15s$ to complete when matching two graphs with $\sim30$ nodes. However, you can certainly adjust the parameter like $I$ and $\beta$ to achieve faster run time.
+The algorithm takes $\sim15s$ to complete when matching two graphs with $\sim30$ nodes, but you can certainly adjust the parameter like $I$ and $\beta$ to achieve faster run time.
 
 \section{Testing the Algorithm}
 \label{sec:graphmatchingtest}
 
-To test the algorithm, we first set a noise level $\epsilon \in [0,1]$. Then we generate a pattern with $n$ nodes and embed this pattern to $2$ randomly generated graphs, $G$ and $G'$, with $n$ to $n*(1+\epsilon)$ nodes. Once we embed the pattern in these two random graphs, we shuffle the index for each node and add some noise to the node and edge labels:
+To test the algorithm, we first set a noise level $\epsilon \in [0,1]$. Then we generate a pattern with $n$ nodes and embed this pattern to $2$ randomly generated graphs, $G$ and $G'$, with $n$ to $n*(1+\epsilon)$ nodes. Once we embed the pattern in these two random graphs, we shuffle the index for each node and add some noise to the labels:
 
 \begin{equation} 
 \overrightarrow{N_{a}} \leftarrow \overrightarrow{N_{a}}  + \chi*\overline{N} \text{ where } \chi \in [0,\epsilon]
@@ -139,7 +140,7 @@ To test the algorithm, we first set a noise level $\epsilon \in [0,1]$. Then we 
 \overrightarrow{E_{ab}} \leftarrow \overrightarrow{E_{ab}}  + \chi*\overline{E} \text{ where } \chi \in [0,\epsilon]
 \end{equation}\\
 
-We then run the matching algorithm $match(G,G')$ and get a match matrix $M$. We ignore the match with the null node $\phi$, and calculate the total number of correct match $m$, and the total number of match observed $l$ from the match matrix $M$. Then we can evaluate the performance by $precision$, $recall$ and $F_1 score$:
+We then run the matching algorithm $match(G,G')$ and get a match matrix $M$. We ignore the match with the null node $\phi$, and calculate the total number of correct match $m$, and the total number of match observed $l$ from the match matrix $M$. Then we can evaluate the performance by $precision$, $recall$ and $F_1$ score:
 \begin{align} 
 & precision = \frac{m}{l}\\
 & recall = \frac{m}{n}\\
@@ -148,11 +149,11 @@ We then run the matching algorithm $match(G,G')$ and get a match matrix $M$. We 
 
 \section{Improvement and Modification}
 
-While the original algorithm works well with small graphs with 20 to 30 nodes, we run into some problems while matching larger graphs with 50 to 100 nodes and therefore make some improvement to Gold and Rangarajan's original algorithm.
+While the original algorithm works well with small graphs with 20 to 30 nodes, we run into some problems while matching larger graphs with more than 50 nodes and therefore we have to make some improvement to Gold and Rangarajan's original algorithm before applying to protein data.
 
 \subsection{Local Minima}
 
-The first problem we encounter is local minima. In this case, the algorithm will generate correct and even perfect match for majority of the test cases. However, for some of the test case, the match result is entirely wrong, which indicates that the graduated assignment process stuck in some local minima.\\
+The first problem we encounter is local minima. In this case, the algorithm will generate correct and even perfect match for majority of the test cases, but entirely wrong matches for some of the test case which indicates that the graduated assignment process stuck in some local minima.\\
 
 In the original algorithm, if we initialized $M_0$ in the wrong places, the assignment process can easily get stuck in sub-optimal match (local minima). While adjusting $\beta$ and $\beta_r$ can mediate the problem, it does not work well in larger graphs since there are more sub-optimal match. Therefore, we introduce a stochastic process in the algorithm:
 
@@ -164,7 +165,7 @@ In the original algorithm, if we initialized $M_0$ in the wrong places, the assi
 	\label{fig:stochastic}
 \end{figure}
 
-In the stochastic process, we essentially add some small noise to the match matrix at the beginning of step \textbf{$B$}:
+To introduce a stochastic process, we simply add a small noise to the match matrix at the beginning of step \textbf{$B$}:
 \begin{equation} 
 M_{ai}^{0} \leftarrow M_{ai}^{0} + \frac{\tau * U(-1,1)}{|G|}
 \end{equation}
@@ -202,13 +203,13 @@ Once we incorporate the stochastic process to the algorithm, we gain a significa
 \subsection{High Recall + Low Precision}
 \label{ssec:nullnode}
 
-The other challenge we encounter is that even though we get high recall rate in a test, we also get low precision rate, which means the algorithm can generate correct match but also force many of the background nodes (i.e. nodes outside of the pattern) matching  to each other.\\
+The other challenge we encounterd was that even though we get high recall rate in a test, we also got low precision rate, which means the algorithm can generate correct match but also force many of the background nodes (i.e. nodes outside of the pattern) to match each other.\\
 
 The first explanation came across our mind would be the two test graphs we generated can share pattern outside the embedded one. However, after careful examination, this is proven not the case.\\
 
-Therefore, we examed how Gold and Rangarajan's original algorithm matches background nodes in $G$ to the null node $\phi$ in $G'$. We realized that since the original algorithm define the compatibility function so that any compatibility related to the $\phi$ node will be set to 0. Therefore, the algorithm does not \emph{actively} match background nodes to  $\phi$ node, but \emph{hope} that the background noise does not attract to one specific node, and end up matching with the $\phi$ node.\\
+Therefore, we examed how Gold and Rangarajan's original algorithm matches background nodes in $G$ to the null node $\phi$ in $G'$. We realized that since the original algorithm define the compatibility function so that any compatibility related to the $\phi$ node will be set to 0. The algorithm does not \emph{actively} match background nodes to  $\phi$ node, but \emph{hope} that the background noise does not attract to one specific node, and end up matching with the $\phi$ node.\\
 
-To handle this problem gracefully, we essentially want to create a fully connected null node network that can match to any of the background pattern. Therefore, we rewrite the compatibility function as:
+To handle this problem gracefully, we create a fully connected null node network that can match to any of the background pattern. Therefore, we rewrite the compatibility function as:
 
 \begin{align} 
 & C_{ai}  = \begin{cases}
@@ -224,9 +225,9 @@ p \text{ percentile of }\{C_{abij}|a,b,i,j\neq\phi\} & a,b=\phi \bigcap i,j\neq\
 0 & otherwise\\
 \end{cases}
 \end{align}
-where $p$ is a percentile we can adjust so that set to 100 to give null node/edge the maximum compatibility every seen while set to 0 to give the minimum compatibility. You can adjust the $p$ to balance the recall and precision rate since higher percentile will encourage nodes match to null node result in low recall but high precision while lower percentile will allow background nodes match together result in high recall but low precision.\\
+where $p$ is a percentile we can adjust so that set to 100 to give null node/edge the maximum compatibility every seen while set to 0 to give the minimum compatibility. You can adjust the $p$ to balance the recall and precision rate as higher percentile will encourage nodes match to null node result in low recall but high precision, while lower percentile will allow background nodes match together result in high recall but low precision.\\
 
-While this is a lot to unpack, the updated compatibility function essentially create a self-linked edge for null node $\overrightarrow{E_{\phi\phi}}$ and give definition for the compatibility of null node to other real node and self-linked null edge to other edge linking two real nodes. Since we don't normalized the slack row and column (match result for null node), this is equivalent to create a fully connected null node network:
+While this is a lot to unpack, the updated compatibility function essentially create a self-linked edge for null node $\overrightarrow{E_{\phi\phi}}$ and give definition for the compatibility of null node to other real node as well as self-linked null edge to other edge linking two real nodes. Since we don't normalized the slack row and column (match result for null node), this is equivalent to create a fully connected null node network that can match to any kind of pattern:
 
 \begin{figure}[h]
 	\centering
@@ -247,6 +248,5 @@ After modified the compatibility function in the original algorithm, we are able
 
 \section{Conclusion}
 
-
-In this chapter we introduced a graph matching algorithm that we improved and used to match the common sub-graph of two ARGs. If we do not apply the heuristic function, the match matrix $M$ shows us how likely one node in graph $G$ can be matched to another graph $G'$, which can in turn help us the summarize the common pattern among a set of graphs.
+In this chapter, we introduced a graph matching algorithm that we improved and used to match the common sub-graph of two ARGs. If we do not apply the heuristic function, the match matrix $M$ shows us how likely one node in graph $G$ could be matched to another graph $G'$, which can in turn help us summarize the common pattern among a set of graphs.
 

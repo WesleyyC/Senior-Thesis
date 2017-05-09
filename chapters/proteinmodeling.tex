@@ -22,13 +22,13 @@ To apply the model on protein crystallography data, we will first need to build 
 
 \subsection{Edge for Protein ARG}
 
-For the edge protein ARG, we assign it a single scalar which is the euclidian distance of two amino acid:
+To label edge for protein ARG, we assign it a single scalar which is the euclidian distance of two amino acid:
 
 \begin{equation} 
 \overrightarrow{E_{ab}}=\sqrt{(x_a-x_b)^2+(y_a-y_b)^2+(z_a-z_b)^2}
 \end{equation}\\
 
-However, we don't want to create an edge for every pair of amino acids. Therefore we choose an $8\AA$ as our distance cutoff, and only create edge for amino acid pairs whose euclidian distance is less than $8\AA$. Here is the histogram for pairwise distance between two amino acids:
+However, we don't want to create an edge for every pair of amino acids. Therefore we choose $8\AA$ as our distance cutoff, and only create edge for amino acid pairs whose euclidian distance is less than $8\AA$. Here is the histogram for pairwise distance between two amino acids:
 
 \begin{figure}[h]
 	\centering
@@ -38,13 +38,13 @@ However, we don't want to create an edge for every pair of amino acids. Therefor
 	\label{fig:distance}
 \end{figure}
 
-Interestingly, even though we pick the $8\AA$ cutoff purely based on the distance distribution, a single amino acid also has a diameter $\sim8\AA$.\\
+Interestingly, even though we pick the $8\AA$ cutoff purely based on the distance distribution shown above, a single amino acid also has a diameter $\sim8\AA$.\\
 
 Since $\overrightarrow{E}$ is just a scalar following a normal distribution, we simply used the assume Gaussian PDF to calculate the compatibility and update the mean as well as the variance.
 
 \subsection{Node for Protein ARG}
 
-While setting up the protein ARG edge is pretty straight forward, creating a reasonable representation and compatibility function is very difficult, and here are a couple of options:
+While setting up the protein ARG edge is pretty straight forward, creating a reasonable representation and compatibility function for node is very difficult, and here are a couple of options:
 
 \subsubsection{One Hot Representation}
  
@@ -60,7 +60,7 @@ However, such compatibility function is not biologically accurate because some a
 
 Since amino acids that share similar biochemistry property might be compatible in some cases, we also consider using BLOSUM matrix in our compatibility function while keeping the one hot index representation for each node $\overrightarrow{N}$.\\
 
-BLOSUM matrices were first introduced by Steven Henikoff and Jorja Henikoff in 1989. They scanned a protein database with align protein sequence and counted the relative frequencies of amino acids and their substitution probabilities. Then, they calculated a log-odds score and produced a substitution matrix $B$ for the 20 standard amino acids:
+BLOSUM matrices were first introduced by Steven Henikoff and Jorja Henikoff in 1989. They scanned a protein database with aligned protein sequence and counted the relative frequencies of amino acids and their substitution probabilities. Then, they calculated a log-odds score and produced a substitution matrix $B$ for the 20 standard amino acids:
 
 \begin{figure}[h]
 	\centering
@@ -76,7 +76,7 @@ And the compatibility function would then become:
 \overrightarrow{C_{ai}}=B[\overrightarrow{N_a},\overrightarrow{N_i}]
 \end{equation}
 
-While the BLOSUM matrix $B$ address the problematic compatibility function for one hot representation. Another problem that we would need to address is model node update. If you recall how we update the mean for component node in E.q. \ref{eq:nmean}, we took a weighted average of all the node based on how the node matching probability and sample matching probability. However, since the index is not continuous, it doesn't really make sense to take the mean any more. During our trail, we simply take the index from the node that has the highest weight/matching probability. This is certainly not ideal, and we want to search for a continuous representation for amino acid that are continuous with a compatibility function that consider the similar biochemistry property of different amino acids.
+While the BLOSUM matrix $B$ address the problematic compatibility function for one hot representation. Another problem that we would need to address is model node update. If you recall how we update the mean for component node in E.q. \ref{eq:nmean}, we took a weighted average of all the node based on how the node matching probability and sample matching probability. However, since the index is not continuous, it doesn't really make sense to take the mean any more. During our trail, we simply take the index from the node that has the highest weight/matching probability (max instead of average). This is certainly not ideal, and we want to search for a continuous representation for amino acid with a compatibility function that consider the similar biochemistry property of different amino acids.
 
 \subsubsection{Amino Acid 2 Vec}
 \label{sssec:a2v}
@@ -84,7 +84,7 @@ While the BLOSUM matrix $B$ address the problematic compatibility function for o
 In natural language processing, researchers deal with a similar problem for one hot representation of word. They came up with word embedding based on its surrounding context, and developed a very effective model, Skip-Gram, for generating word vector. With library like Gensim\footnotemark, we can generate our own word vector by simply feeding the model enough document with words.\\
 \footnotetext{https://radimrehurek.com/gensim/}
 
-If we think of amino acid sequences as documents and individual amino acid as word, can we generate amino acid vector the same way using model like Gensim? It makes sense because amino acids share similar biochemistry property are likely to stay in a similar chemistry environment created by nearby amino acids. We feed the Skip-Gram model with protein sequences across many species, and get protein vectors $\overrightarrow{AA}$ with a dimension of $20$\footnotemark that cluster by their biochemistry property:
+If we think of amino acid sequences as documents and individual amino acid as word, can we generate amino acid vector the same way using model like Gensim? It makes sense because amino acids that share similar biochemistry property are likely to stay in a similar chemistry environment created by nearby amino acids. We feed the Skip-Gram model with protein sequences across many species, and get protein vectors $\overrightarrow{AA}$ with a dimension of $20$\footnotemark that cluster by their biochemistry property:
 \footnotetext{Since we have 20 amino acids.}
 
 \begin{figure}[h]
@@ -101,7 +101,7 @@ Therefore, we can label each node with its associated amino acid vector and our 
 \overrightarrow{C_{ai}}=\sqrt{\sum_{z=1}^{20}(\overrightarrow{N_{a}}[z]-\overrightarrow{N_{i}}[z])^2}
 \end{equation}
 
-We also construct a $20\times 20$ compatibility matrix for the $20$ amino acids, and it follow a similar form as the BLOSUM matrix after scaling. For model node, updating mean is  just as easy as follow E.q. \ref{eq:nmean}.\\
+To further exam this method, we also construct a $20\times 20$ compatibility matrix for the $20$ amino acids, and it follow a similar form as the BLOSUM matrix after scaling. For model node, updating mean is  just as easy as follow E.q. \ref{eq:nmean}.\\
 
 This is a very cool idea with lots of potential, but the drawback of such representation would be the lack of locality. Even though our amino acid vector can be clustered by their biochemistry property, they are likely to show slightly different property in different environment, so using a global vector to represent amino acid in different context might not be ideal as well. 
 
@@ -128,7 +128,7 @@ Once we calculate $\overrightarrow{F^w_i}$, we can calculate the log odd-ratio w
 \overrightarrow{N^w_i}[z] = & \text{log}(\frac{\overrightarrow{F^w_i}[z]}{\overrightarrow{F_B}[z]}) & \forall z=1,2,3...20
 \end{align}
 
-While this seems complicated, but it is the same idea as BLOSUM matrix. Instead of using a conserve protein alignment database as for BLOSUM, we used our own alignment/matching matrix $M^{sw}$. Since $M^{sw}$ is computed both by amino acid compatibility as well as structure/edge compatibility, we are able to introduced locality into such local substitution vector.
+While this seems complicated, it is very similar to how we get BLOSUM matrix. However, instead of using a conserve protein alignment database as for BLOSUM, we used our own alignment/matching matrix $M^{sw}$. Since $M^{sw}$ is computed both by amino acid compatibility as well as structure/edge compatibility, we are able to introduced locality into such local substitution vector.
 
 \section{Protein Backbone Encoding in Objective Function}
 
@@ -142,12 +142,12 @@ E(M)=&-\frac{1}{2}\sum_{a=1}^{G}\sum_{i=1}^{G'}\sum_{b=1}^{G}\sum_{j=1}^{G'}M_{a
 &\color{red}{-\beta\sum_{a=1}^{G}\sum_{i=1}^{G'}M_{a-1i-1}M_{ai}M_{a+1i+1}}&
 \end{align}
 
-While the addition looks complicated, it is simply saying that: if node $a$ in $G$ has a good match with node $i$ in $G'$, than the node immediately before and after node $a$ should also have a good match with the node immediately before and after node $i$ as we are indexing the node by their sequence order.
+While the additional term looks complicated, it is simply saying that: if node $a$ in $G$ has a good match with node $i$ in $G'$, than the node immediately before and after node $a$ should also have a good match with the node immediately before and after node $i$ as we are indexing the node by their sequence order.
 
 \section{Proof of Concept}
 \label{sec:poc}
 
-Just to do a proof of concept\footnotemark, we trained a model on $5$ protein structure all contains same part of the \emph{CH1} domain with $2$ components and test it on the original structure, mutated structure(reversing the entire sequence, partition the sequence and reverse the order of partition) that are impossible to detect without 3D structure information, and finally random structure:
+Just to do a proof of concept\footnotemark, we trained a model on $5$ protein structure all contains same part of the \emph{CH1} domain with $2$ components and test it on the original structure, mutated structure(reversing the entire sequence, reversing partition of the sequence) that are impossible to detect without 3D structure information, and finally random proteins:
 \footnotetext{Not enough time to do it all!}
 
 \begin{figure}[h]
